@@ -34,6 +34,7 @@ contract AutoBattler {
                                 Mappings and Arrays
     //////////////////////////////////////////////////////////////*/
     Battle[] public battles;
+    mapping(address => bytes) public defenseHashes;
 
 
     /*//////////////////////////////////////////////////////////////
