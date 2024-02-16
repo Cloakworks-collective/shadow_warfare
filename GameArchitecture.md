@@ -57,6 +57,6 @@ If, he does not - then attacker can call forfeit() and win.
 
 
 - We just Keep a leaderboard of wins 
- - Players can only attack once in 24 hrs 
+- Players can only attack once in 24 hrs 
 
 
