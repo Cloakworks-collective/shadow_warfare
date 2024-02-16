@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-
-   struct Battle {
-        uint256 cityId;
-        address attacker;
-        address defender;
-        bytes32 defense;
-        bytes32 attack;
+    enum ArmyType {
+        Tank,
+        Artillery,
+        Infantry
     }
-
-    struct City {
-        address owner;
-        bool defenseVerified;
-        uint256 infantry;
+    
+    enum CityType {
+        Tokyo,
+        Miami,
+        Singapore
     }
 
     struct Army {
@@ -22,19 +19,30 @@ pragma solidity ^0.8.20;
         uint256 artillery;
     }
 
-
-    struct CommitDefenseParams {
-        bytes proof;
-        uint256 cityId;
+    struct Player {
+        uint256 id;
+        uint256 wins;
+        address owner;
     }
 
-    struct CommitAttackParams {
-        uint256 cityId;
+    struct City {
+        uint256 id;
+        Player ruler;
+        bool defenseVerified;
+        bool defenseRevealed;
+        uint256 citytype;
+        bytes32 defenseHash;
+    }
+
+   struct Battle {
+        uint256 defenderCity;
+        Army attackerArmy;
+        address defender;
+        bytes32 defense;
         bytes32 attack;
     }
 
-    struct VerifyDefenseParams {
-        uint256 cityId;
-        bytes proof;
-    }
+    
+
+    
 

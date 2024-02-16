@@ -28,7 +28,6 @@ contract AutoBattler {
     //////////////////////////////////////////////////////////////*/
     INoirVerifier public immutable validDefenseVerifier;
     INoirVerifier public immutable revealAttackVerifier;
-    City public immutable city;
 
     /*//////////////////////////////////////////////////////////////
                                 Mappings and Arrays
@@ -48,12 +47,10 @@ contract AutoBattler {
                                 MODIFIERS
     //////////////////////////////////////////////////////////////*/
 
-    modifier onlyCityOwner(uint256 cityId) {
-        if (city.ownerOf(cityId) != msg.sender) {
-            revert ErrorUnauthorized();
-        }
-         _;
-    }
+  modifier onlyCityOwner(uint256 _cityId) { 
+    _;
+  }
+
 
     /*//////////////////////////////////////////////////////////////
                             CONSTRUCTOR
@@ -61,16 +58,19 @@ contract AutoBattler {
     constructor(
         address _validDefenseVerifier,
         address _revealAttackVerifier, 
-        address _city
     ) {
         validDefenseVerifier = INoirVerifier(_validDefenseVerifier);
         revealAttackVerifier = INoirVerifier(_revealAttackVerifier);
-        city = City(_city);
     }
 
     /*//////////////////////////////////////////////////////////////
                              USER ACTIONS
     //////////////////////////////////////////////////////////////*/
+
+    // register a city
+    function registerCity() public {
+
+    }
 
     // player 1 commits defense
     // player 1 defense is verified
@@ -78,7 +78,7 @@ contract AutoBattler {
     function commitDefense(
         bytes calldata _proof,
         bytes32[] calldata _publicInputs
-    ) external  onlyCityOwner(params.cityId){
+    ) public {
         require(validDefenseVerifier.verify(_proof, _publicInputs), "Invalid defense proof");
         emit DefenseVerified(msg.sender, uint256(_publicInputs[0]));
     }
@@ -88,7 +88,7 @@ contract AutoBattler {
     function commitAttack(
         bytes calldata _proof,
         bytes32[] calldata _publicInputs
-    ) external  onlyCityOwner(params.cityId) {
+    ) public {
         require(revealAttackVerifier.verify(_proof, _publicInputs), "Invalid attack proof");
         emit AttackRevealed(msg.sender, uint256(_publicInputs[0]));
     }
@@ -97,14 +97,14 @@ contract AutoBattler {
     // just check hash of defense
     function verifyDefense(
         uint256 _cityId
-    ) external  onlyCityOwner(params.cityId) {
+    ) public {
         emit BattleResult(msg.sender, _cityId, true);
     }
 
     // collect the forfeit, defense was not verified in time (24 hours after attack was cimmited)
     function collectForfeit(
         uint256 _cityId
-    ) external {
+    ) public {
         emit BattleResult(msg.sender, _cityId, false);
     }
 
