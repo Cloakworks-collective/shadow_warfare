@@ -18,11 +18,12 @@ abstract contract IBattleshipGame is ERC2771Context {
 
     /// STRUCTS ///
 
-    enum FortressStatus {
+    enum CityStatus {
         NonExistant,
         InPeace,  
         UnderAttack,
         Destroyed,
+        Defended, 
         Surrendered      
     }
 
@@ -34,11 +35,12 @@ abstract contract IBattleshipGame is ERC2771Context {
 
     struct PlayerStatus {
         uint256 cityId;
-        bytes32 fortressArmy;
-        FortressStatus confict;
+        bytes32 cityArmyHash;
+        CityStatus conflict;
         uint256 points;
-        bytes32 targetFortress;
-        bytes32 attacked_by;
+        bytes32 targetCity;
+        address attacked_by;
+        ArmyType attaker_army;
     }
 
     struct GameRecord {
@@ -58,7 +60,7 @@ abstract contract IBattleshipGame is ERC2771Context {
      * Determine whether message sender has registered of a fortress
      */
     modifier isPlayer(uint256 _game) {
-        require(GameRecord.player[_msgSender()].fortressArmy != bytes32(0), "Please register a city first!");
+        require(GameRecord.player[_msgSender()].cityArmyHash != bytes32(0), "Please register a city first!");
         _;
     }
 
@@ -67,9 +69,9 @@ abstract contract IBattleshipGame is ERC2771Context {
      */
     modifier canBuild() {
         require(
-            GameRecord.play[_msgSender()].confict == FortressStatus.NonExistant ||
-            GameRecord.play[_msgSender()].confict == FortressStatus.Destroyed ||
-            GameRecord.play[_msgSender()].confict == FortressStatus.Surrendered
+            GameRecord.player[_msgSender()].conflict == CityStatus.NonExistant ||
+            GameRecord.player[_msgSender()].conflict == CityStatus.Destroyed ||
+            GameRecord.player[_msgSender()].conflict == CityStatus.Surrendered
             , "You already have a standing fortress!"
         );
         _;
@@ -80,8 +82,8 @@ abstract contract IBattleshipGame is ERC2771Context {
      * Default: null bytes instead of target's army hash
      */
     modifier canAttack() {
-        require(GameRecord.play[_msgSender()].confict == FortressStatus.InPeace, "You city should be in peace for you to attack");
-        require(GameRecord.player[_msgSender()].targetFortress == bytes32(0), "You opponent did not report the clash result yet!");
+        require(GameRecord.play[_msgSender()].conflict == CityStatus.InPeace, "You city should be in peace for you to attack");
+        require(GameRecord.player[_msgSender()].targetCity == bytes32(0), "You opponent did not report the clash result yet!");
         _;
     }
 
@@ -89,7 +91,7 @@ abstract contract IBattleshipGame is ERC2771Context {
      * Ensure a message sender is under attack
      */
     modifier isUnderAttack() {
-        require(GameRecord.play[_msgSender()].confict == FortressStatus.UnderAttack, "You city is not under attack!");
+        require(GameRecord.play[_msgSender()].confict == CityStatus.UnderAttack, "You city is not under attack!");
         _;
     }
 
@@ -104,12 +106,12 @@ abstract contract IBattleshipGame is ERC2771Context {
                 isAttackable = true;
             }
         }
-        require(isAttackable == true, "Your target fortress is not attackable");
+        require(isAttackable == true, "Your target city is not attackable");
         _;
     }
 
     /**
-     * Register a new city by uploading a valid fortress army
+     * Build a new fortress by commiting a defense army.
      * @dev modifier canBuild
      *
      * @param _proof bytes calldata - zk proof of valid board
@@ -121,13 +123,13 @@ abstract contract IBattleshipGame is ERC2771Context {
      * @dev modifier isUnderAttack
      *
      */
-    function surrender(uint256 _game) external virtual;
+    function surrender() external virtual;
 
     /**
-     * Attack a fortress in peace
-     * @dev modifier isAttackable(_taret)
+     * Attack a ciy in peace
+     * @dev modifier isAttackable(_target)
      *
-     * @param _target address - the address of the target fortress to attack
+     * @param _target address - the address of the target city to attack
 
      */
     function attack(address _target) external virtual;
@@ -137,6 +139,14 @@ abstract contract IBattleshipGame is ERC2771Context {
      */
     function findAttackableFortress() external view returns (address);
 
+    /**
+     * Report the result of the clash between the player and his attacker.
+     * If the player defends his city then he wins points and he keeps his defending army private & unchanged.
+     * If the player loses then he is required to buildCity again.  
+     * @note: the player takes the attacker army and his army hash as a public input to prove his honesty. 
+     */
+    function reportAttack(bytes calldata _proof, target) 
+    
 
     /**
      * Return the player info
