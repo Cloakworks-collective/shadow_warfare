@@ -170,10 +170,10 @@ abstract contract IAutoBattler {
      * Attack a city by committing an attacking army.
      * @dev modifier isAttackable(_target)
      *
-     * @param _target uint256 - the id of the target city to attack
-
+     * @param _target address - the address of an attackable city owner
+     * @param _attackerArmy Army - the attack army of the player
      */
-    function attack(uint256 _target) external virtual;
+    function attack(address _target, Army memory _attackerArmy) external virtual;
 
     /**
      * Report the result of the clash between the player and his attacker.
@@ -181,7 +181,7 @@ abstract contract IAutoBattler {
      * - If the player loses then he is required to buildCity again.  
      * - The player takes the attacker army and his army hash as a public input to prove his honesty. 
      */
-    function reportAttack(bytes calldata _proof) external virtual;
+    function reportAttack(bool attacker_wins, bytes calldata _proof) external virtual;
 
 
     /**
@@ -198,9 +198,9 @@ d     */
     function lootCity() external virtual;    
 
     /**
-     * @return address - the address of an attackable fortress
+     * @return address - the address of an owner of a city in peace.
      */
-    function findAttackableFortress() external virtual view returns (address);
+    function findAttackableCity() external virtual view returns (address);
 
 
     /**
@@ -210,14 +210,14 @@ d     */
      * @return _id uint256 - city identifier
      * @return _defenseArmyHash bytes32 - hashe of the player's defense army
      * @return _name bytes32 - the name of the city
-     * @return _conflict CityStatus - the conflict status of the city
+     * @return _cityStatus CityStatus - the conflict status of the city
      * @return _points uint256 - the player's score
      * @return _attacker address - the address of the attacker(address(0) if CityStatus=InPeace)
      * @return _attackedAt uint256 - the time at which the player is attacked,
      * @return _target address - the target player address that is underAttack by this player,
-     * @return _attackArmy Army - the attack army
+     * @return _attackingArmy Army - the attack army
      */
-    function playerCity(
+    function playerState(
         address _player
     )
         external
@@ -227,11 +227,11 @@ d     */
             uint256 _id,
             bytes32 _defenseArmyHash,
             bytes32 _name,
-            CityStatus _conflict,
+            CityStatus _cityStatus,
             uint256 _points,
             address _attacker,
             uint256 _attackedAt,
             address _target,
-            Army memory _attackArmy
+            Army memory _attackingArmy
         );
 }
