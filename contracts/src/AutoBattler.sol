@@ -4,8 +4,10 @@ pragma solidity ^0.8.19;
 import "./IAutoBattler.sol";
 
 contract AutoBattler is IAutoBattler {
-    /// CONSTRUCTOR ///
 
+     uint public constant ARMY_SIZE = 1000;
+
+    /// CONSTRUCTOR ///
     /**
      * Construct new instance of Battleship manager
      *
@@ -44,14 +46,17 @@ contract AutoBattler is IAutoBattler {
         gameRecord.player[msg.sender].cityStatus = CityStatus.InPeace;
     }
 
-    //TODO Check army validity to reduce error while ZK Provings
     function attack(address _target, Army memory _attackerArmy)
         external
         override
         isPlayer
         canAttack
         isAttackable(_target)
-    {
+    {   
+        // validate the composition of the attacking army
+        uint totalArmyCount = _attackerArmy.tank + _attackerArmy.artillery + _attackerArmy.infantry;
+        require(totalArmyCount < ARMY_SIZE, "Army size exceeds limit!");
+
         // Fetch the target's city
         City storage defenderCity = gameRecord.player[_target];
 
