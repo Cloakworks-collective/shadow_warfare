@@ -14,6 +14,7 @@ abstract contract IAutoBattler {
     event Defended(address _winner, uint256 _nonce);
     event Destroyed(address _defender, uint256 _nonce);
     event Surrendered(address _loser, uint256 _nonce);
+    event Looted(address _attacker, uint256 _nonce);
 
     /// ENUMS ///
 
@@ -157,9 +158,9 @@ abstract contract IAutoBattler {
      * Defends the city by commiting a defense army.
      * @dev modifier canBuild
      *
-     * @param _proof bytes calldata - zk proof of valid board
+     * @param _proof bytes memory - zk proof of valid board
      */
-    function defendCity(bytes calldata _proof) public virtual;
+    function defendCity(bytes memory _proof) public virtual;
 
     /**
      * Attack a city by committing an attacking army.
