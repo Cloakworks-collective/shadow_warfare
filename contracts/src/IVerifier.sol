@@ -2,9 +2,9 @@
 pragma solidity ^0.8.19;
 
 interface IArmyVerifier {
-    function verify(bytes calldata) external view returns (bool r);
+    function verify(bytes calldata _proof, bytes32[] calldata _publicInputs) external view returns (bool);
 }
 
-interface IAttackVerifier {
-    function verify(bytes calldata) external view returns (bool r);
+interface IBattleVerifier {
+    function verify(bytes calldata _proof, bytes32[] calldata _publicInputs) external view returns (bool);
 }

@@ -29,9 +29,9 @@ abstract contract IAutoBattler {
 
     /// STRUCTS ///
     struct Army {
-        uint256 tank;
-        uint256 artillery;
         uint256 infantry;
+        uint256 artillery;
+        uint256 tanks;
     }
 
     struct City {
@@ -54,7 +54,7 @@ abstract contract IAutoBattler {
 
     GameRecord public gameRecord; // game record
     IArmyVerifier public armyVerifier; // verifier for proving valid army rule compliance
-    IAttackVerifier public battleVerifier; // verifier for proving attack report honesty
+    IBattleVerifier public battleVerifier; // verifier for proving attack report honesty
 
     /// MODIFIERS ///
 
@@ -132,13 +132,13 @@ abstract contract IAutoBattler {
      * @dev modifier canBuild
      *
      */
-    function buildCity(bytes calldata _proof) external virtual;
+    function buildCity(bytes calldata _proof, bytes32 defenseArmyHash) external virtual;
 
     /**
      * If the player's defense army is defeated(lost in battle)
      * the player calls this function to commit a new defense army.
      */
-    function deployNewDefenseArmy(bytes calldata _proof) external virtual;
+    function deployNewDefenseArmy(bytes calldata _proof, bytes32 defenseArmyHash) external virtual;
 
     /**
      * Attack a city by committing an attacking army.
@@ -155,7 +155,7 @@ abstract contract IAutoBattler {
      * - If the player loses then he is required to buildCity again.
      * - The player takes the attacker army and his army hash as a public input to prove his honesty.
      */
-    function reportAttack(bool attacker_wins, bytes calldata _proof) external virtual;
+    function reportAttack(uint battle_result, bytes calldata _proof) external virtual;
 
     /**
      * Surrender when under attack

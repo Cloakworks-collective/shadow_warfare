@@ -16,15 +16,15 @@ contract AutoBattler is IAutoBattler {
      */
     constructor(address _armyVerifierAddress, address _battleVerifierAddress) {
         armyVerifier = IArmyVerifier(_armyVerifierAddress);
-        battleVerifier = IAttackVerifier(_battleVerifierAddress);
+        battleVerifier = IBattleVerifier(_battleVerifierAddress);
         gameRecord.attackNonce = 1;
     }
 
     /// FUNCTIONS ///
 
-    function buildCity(bytes memory _proof) external override canBuild {
+    function buildCity(bytes memory _proof, bytes32 defenseArmyHash) external override canBuild {
         // Validate player's army configuration and update defenseArmyHash
-        _defendCity(_proof);
+        _defendCity(_proof, defenseArmyHash);
 
         // Set up a default city
         City memory city;
@@ -38,9 +38,9 @@ contract AutoBattler is IAutoBattler {
         gameRecord.player[msg.sender] = city;
     }
 
-    function deployNewDefenseArmy(bytes memory _proof) external override isPlayer isDefeated {
+    function deployNewDefenseArmy(bytes memory _proof, bytes32 defenseArmyHash) external override isPlayer isDefeated {
         // Validate player's army configuration and update defenseArmyHash
-        _defendCity(_proof);
+        _defendCity(_proof, defenseArmyHash);
 
         // Update city status
         gameRecord.player[msg.sender].cityStatus = CityStatus.InPeace;
@@ -54,7 +54,7 @@ contract AutoBattler is IAutoBattler {
         isAttackable(_target)
     {   
         // validate the composition of the attacking army
-        uint totalArmyCount = _attackerArmy.tank + _attackerArmy.artillery + _attackerArmy.infantry;
+        uint totalArmyCount = _attackerArmy.tanks + _attackerArmy.artillery + _attackerArmy.infantry;
         require(totalArmyCount == ARMY_SIZE, "Army size exceeds limit!");
 
         // Fetch the target's city
@@ -77,19 +77,35 @@ contract AutoBattler is IAutoBattler {
         emit Clash(msg.sender, _target, gameRecord.attackNonce);
     }
 
-    function reportAttack(bool attacker_wins, bytes calldata _proof) external override isPlayer isUnderAttack {
+    function reportAttack(uint battle_result, bytes calldata _proof) external override isPlayer isUnderAttack {
+        // Assert battle result is zero or one 
+        require(battle_result == 0 || battle_result == 1, "Battle result must be zero or one");
+        
         // Fetch the defender's city(the caller)
         City storage defenderCity = gameRecord.player[msg.sender];
 
+        // Fetch the attacker's address and then city
+        address attacker_address = defenderCity.attacker;
+        City storage attackerCity = gameRecord.player[attacker_address];
+        
+        // Fetch the attacker's city Army
+        Army memory attacker_army = defenderCity.attackingArmy;
+        
         // Check proof uses the caller's army commitment(defenseArmyHash)
         require(validateArmyCommitment(_proof, defenderCity.defenseArmyHash), "Non compliant army commitment!");
 
         // Check if the battle proof is valid
-        if (!battleVerifier.verify(_proof)) {
+        bytes32[] memory publicInputs = new bytes32[](4);
+        publicInputs[0] = defenderCity.defenseArmyHash;
+        publicInputs[1] = bytes32(attacker_army.infantry);
+        publicInputs[2] = bytes32(attacker_army.artillery);
+        publicInputs[3] = bytes32(attacker_army.tanks);
+        publicInputs[4] = bytes32(battle_result);
+        if (!battleVerifier.verify(_proof, publicInputs)) {
             revert("Invalid attack report proof");
-        }
+        } 
 
-        if (attacker_wins) {
+        if (battle_result == 0) {
             // Update the city state of the defender player(the caller)
             defenderCity.cityStatus = CityStatus.Destroyed;
             defenderCity.attacker = address(0);
@@ -97,7 +113,6 @@ contract AutoBattler is IAutoBattler {
             defenderCity.attackingArmy = Army(0, 0, 0);
 
             // Update the city state of the attacking player
-            City storage attackerCity = gameRecord.player[msg.sender];
             attackerCity.target = address(0);
             attackerCity.points += 1;
 
@@ -112,7 +127,6 @@ contract AutoBattler is IAutoBattler {
             defenderCity.points += 1;
 
             // Update the city state of the attacking player
-            City storage attackerCity = gameRecord.player[msg.sender];
             attackerCity.target = address(0);
 
             // Emit event that the defender(caller) has successfully defender his city
@@ -217,9 +231,11 @@ contract AutoBattler is IAutoBattler {
      *
      * @param _proof bytes memory - zk proof of valid army
      */
-    function _defendCity(bytes memory _proof) internal {
+    function _defendCity(bytes memory _proof, bytes32 defenseArmyHash) internal {
         // Verify integrity of defense army configuration
-        require(armyVerifier.verify(_proof), "Invalid Army Configuration!");
+        bytes32[] memory publicInputs = new bytes32[](1);
+        publicInputs[0] = defenseArmyHash;
+        require(armyVerifier.verify(_proof, publicInputs), "Invalid Army Configuration!");
 
         // Extract army commitment from public inputs to enforce battle proof inputs against
         bytes32 armyCommitment;
