@@ -1,5 +1,5 @@
 [package]
-name = "move"
+name = "battle"
 type = "bin"
 authors = [""]
 compiler_version = ">=0.22.0"

@@ -1,5 +1,5 @@
 [package]
-name = "reverify"
+name = "army"
 type = "bin"
 authors = [""]
 compiler_version = ">=0.22.0"
