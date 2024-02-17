@@ -60,3 +60,11 @@ If, he does not - then attacker can call forfeit() and win.
 - Players can only attack once in 24 hrs 
 
 
+
+## Circuits
+1. Validate army and store army hash on-chain
+  - Why? ==> it makes the defender army private.
+2. Report opponents attack 
+  - Why? ==> 1. Because the player should still mask his defending army
+             2. If the player defends his city then he doesn't need to change it and it should remain private
+             3. If destroyed or forfeited the require defender to build again.
