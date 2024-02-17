@@ -5,7 +5,7 @@ import "./IAutoBattler.sol";
 
 contract AutoBattler is IAutoBattler {
 
-     uint public constant ARMY_SIZE = 1000;
+    uint public constant ARMY_SIZE = 1000;
 
     /// CONSTRUCTOR ///
     /**
@@ -55,7 +55,7 @@ contract AutoBattler is IAutoBattler {
     {   
         // validate the composition of the attacking army
         uint totalArmyCount = _attackerArmy.tank + _attackerArmy.artillery + _attackerArmy.infantry;
-        require(totalArmyCount < ARMY_SIZE, "Army size exceeds limit!");
+        require(totalArmyCount == ARMY_SIZE, "Army size exceeds limit!");
 
         // Fetch the target's city
         City storage defenderCity = gameRecord.player[_target];
