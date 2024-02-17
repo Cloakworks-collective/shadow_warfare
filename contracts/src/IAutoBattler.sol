@@ -28,7 +28,6 @@ abstract contract IAutoBattler {
     }
 
     /// STRUCTS ///
-
     struct Army {
         uint256 tank;
         uint256 artillery;
@@ -36,9 +35,7 @@ abstract contract IAutoBattler {
     }
 
     struct City {
-        uint256 id;
         bytes32 defenseArmyHash;
-        bytes32 name;
         CityStatus cityStatus;
         uint256 points;
         address attacker;
@@ -48,8 +45,7 @@ abstract contract IAutoBattler {
     }
 
     struct GameRecord {
-        uint256 attackNonce; // clash #
-        uint256 cityNonce; // city #
+        uint256 attackNonce; // clash counter
         mapping(address => City) player; // map player address to City Data
         address[] attackable; // record of attackable cities infered by player address
     }
@@ -183,9 +179,7 @@ abstract contract IAutoBattler {
      * Return the player city state
      *
      * @param _player address - address of the player
-     * @return _id uint256 - city identifier
      * @return _defenseArmyHash bytes32 - hashe of the player's defense army
-     * @return _name bytes32 - the name of the city
      * @return _cityStatus CityStatus - the conflict status of the city
      * @return _points uint256 - the player's score
      * @return _attacker address - the address of the attacker(address(0) if CityStatus=InPeace)
@@ -198,9 +192,7 @@ abstract contract IAutoBattler {
         view
         virtual
         returns (
-            uint256 _id,
             bytes32 _defenseArmyHash,
-            bytes32 _name,
             CityStatus _cityStatus,
             uint256 _points,
             address _attacker,

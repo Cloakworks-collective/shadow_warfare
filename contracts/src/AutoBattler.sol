@@ -16,7 +16,6 @@ contract AutoBattler is IAutoBattler {
         armyVerifier = IArmyVerifier(_armyVerifierAddress);
         battleVerifier = IAttackVerifier(_battleVerifierAddress);
         gameRecord.attackNonce = 1;
-        gameRecord.cityNonce = 1;
     }
 
     /// FUNCTIONS ///
@@ -27,7 +26,6 @@ contract AutoBattler is IAutoBattler {
 
         // Set up a default city
         City memory city;
-        city.id = gameRecord.cityNonce;
         city.points = 0;
         city.cityStatus = CityStatus.InPeace;
         city.target = address(0);
@@ -36,9 +34,6 @@ contract AutoBattler is IAutoBattler {
 
         // Add the new city to the game record
         gameRecord.player[msg.sender] = city;
-
-        // Increment the city nonce
-        gameRecord.cityNonce++;
     }
 
     function deployNewDefenseArmy(bytes memory _proof) external override isPlayer isDefeated {
@@ -191,9 +186,7 @@ contract AutoBattler is IAutoBattler {
         view
         override
         returns (
-            uint256 _id,
             bytes32 _defenseArmyHash,
-            bytes32 _name,
             CityStatus _cityStatus,
             uint256 _points,
             address _attacker,
@@ -202,9 +195,7 @@ contract AutoBattler is IAutoBattler {
             Army memory _attackingArmy
         )
     {
-        _id = gameRecord.player[_player].id;
         _defenseArmyHash = gameRecord.player[_player].defenseArmyHash;
-        _name = gameRecord.player[_player].name;
         _cityStatus = gameRecord.player[_player].cityStatus;
         _points = gameRecord.player[_player].points;
         _attacker = gameRecord.player[_player].attacker;
