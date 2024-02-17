@@ -89,7 +89,7 @@ contract AutoBattler is IAutoBattler {
         City storage defenderCity = gameRecord.player[msg.sender];
 
         // Check proof uses the caller's army commitment(defenseArmyHash)
-        require(validateArmyCommitment(_proof, defenderCity.defenseArmyHash), "Non compliant army commitment!");
+        require(_validateArmyCommitment(_proof, defenderCity.defenseArmyHash), "Non compliant army commitment!");
 
         // Check if the battle proof is valid
         if (!battleVerifier.verify(_proof)) {
@@ -184,9 +184,7 @@ contract AutoBattler is IAutoBattler {
     function findAttackableCity() external view override returns (address) {
         require(gameRecord.attackable.length > 0, "Cannot find any attackable city!");
 
-        // Generate a pseudo-random number using block timestamp and contract address
-        uint256 randomNumber = uint256(keccak256(abi.encodePacked(block.timestamp, address(this))));
-        uint256 randomIndex = randomNumber % gameRecord.attackable.length;
+        uint256 randomIndex = _generatePsuedoRandomNumber(0, gameRecord.attackable.length);
 
         return gameRecord.attackable[randomIndex];
     }
@@ -230,10 +228,26 @@ contract AutoBattler is IAutoBattler {
      * @param _armyCommitment bytes32 - the commitment to compare against extracted value
      * @return ok bool - true if commitments match
      */
-    function validateArmyCommitment(bytes memory _proof, bytes32 _armyCommitment) internal pure returns (bool ok) {
+    function _validateArmyCommitment(bytes memory _proof, bytes32 _armyCommitment) internal pure returns (bool ok) {
         assembly {
             let commitment := mload(add(_proof, 32))
             ok := eq(commitment, _armyCommitment)
         }
     }
+
+    /**
+     * Generate a pseudo-random number using block timestamp and contract address
+     * @dev army commitment is stored in the first 32 bytes of a proof string
+     *
+     * @param _max uint256 - the maximum value of the random number
+     * @param _min uin256 - the minimum value of the random number
+     * @return randomNUmber uint256 - the generated random number
+     */
+    function _generatePsuedoRandomNumber(uint256 _min, uint256 _max) internal view returns (uint256) {
+        uint256 randomNumber = uint256(keccak256(abi.encodePacked(block.timestamp, address(this))));
+        randomNumber = randomNumber % (_max - _min) + _min;
+        return randomNumber;
+    }
+
+ 
 }
