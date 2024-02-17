@@ -7,7 +7,6 @@ import "./IVerifier.sol";
  * Abstraction for Zero-Knowledge AutoBattler Game
  */
 abstract contract IAutoBattler {
-
     /// EVENTS ///
 
     event Joined(uint256 _nonce, address _by);
@@ -20,11 +19,11 @@ abstract contract IAutoBattler {
 
     enum CityStatus {
         NonExistant,
-        InPeace,  
+        InPeace,
         UnderAttack,
         Destroyed,
-        Defended, 
-        Surrendered      
+        Defended,
+        Surrendered
     }
 
     enum Faction {
@@ -40,7 +39,7 @@ abstract contract IAutoBattler {
     }
 
     /// STRUCTS ///
-    
+
     struct Army {
         uint256 tank;
         uint256 artillery;
@@ -56,9 +55,8 @@ abstract contract IAutoBattler {
         uint256 points;
         address attacker;
         uint256 attackedAt;
-        address target; 
+        address target;
         Army attackingArmy;
-
     }
 
     struct GameRecord {
@@ -80,10 +78,7 @@ abstract contract IAutoBattler {
      * Determine whether message sender has registered of a fortress
      */
     modifier isPlayer() {
-        require(
-            gameRecord.player[msg.sender].defenseArmyHash != bytes32(0),
-            "Please register a city first!"
-        );
+        require(gameRecord.player[msg.sender].defenseArmyHash != bytes32(0), "Please register a city first!");
         _;
     }
 
@@ -92,8 +87,7 @@ abstract contract IAutoBattler {
      */
     modifier canBuild() {
         require(
-            gameRecord.player[msg.sender].cityStatus == CityStatus.NonExistant,
-            "You already have a defending city!"
+            gameRecord.player[msg.sender].cityStatus == CityStatus.NonExistant, "You already have a defending city!"
         );
         _;
     }
@@ -103,8 +97,8 @@ abstract contract IAutoBattler {
      */
     modifier isDefeated() {
         require(
-            gameRecord.player[msg.sender].cityStatus == CityStatus.Destroyed ||
-            gameRecord.player[msg.sender].cityStatus == CityStatus.Surrendered, 
+            gameRecord.player[msg.sender].cityStatus == CityStatus.Destroyed
+                || gameRecord.player[msg.sender].cityStatus == CityStatus.Surrendered,
             "Your army is not defeated!"
         );
         _;
@@ -115,8 +109,13 @@ abstract contract IAutoBattler {
      * Default: null bytes instead of target's army hash
      */
     modifier canAttack() {
-        require(gameRecord.player[msg.sender].cityStatus == CityStatus.InPeace, "You city should be in peace for you to attack");
-        require(gameRecord.player[msg.sender].target == address(0), "Your opponent did not report the clash result yet!");
+        require(
+            gameRecord.player[msg.sender].cityStatus == CityStatus.InPeace,
+            "You city should be in peace for you to attack"
+        );
+        require(
+            gameRecord.player[msg.sender].target == address(0), "Your opponent did not report the clash result yet!"
+        );
         _;
     }
 
@@ -152,11 +151,7 @@ abstract contract IAutoBattler {
      * @param name bytes32 name - name of the city
      * @param faction uint8 - faction of the city
      */
-    function buildCity(
-        bytes32 name, 
-        Faction faction,
-        bytes calldata _proof
-    ) external virtual;
+    function buildCity(bytes32 name, Faction faction, bytes calldata _proof) external virtual;
 
     /**
      * Defends the city by commiting a defense army.
@@ -178,11 +173,10 @@ abstract contract IAutoBattler {
     /**
      * Report the result of the clash between the player and his attacker.
      * - If the player defends his city then he wins points and he keeps his defending army private & unchanged.
-     * - If the player loses then he is required to buildCity again.  
-     * - The player takes the attacker army and his army hash as a public input to prove his honesty. 
+     * - If the player loses then he is required to buildCity again.
+     * - The player takes the attacker army and his army hash as a public input to prove his honesty.
      */
     function reportAttack(bool attacker_wins, bytes calldata _proof) external virtual;
-
 
     /**
      * Surrender when under attack
@@ -191,17 +185,16 @@ abstract contract IAutoBattler {
      */
     function surrender() external virtual;
 
-
     /**
      * Claim win points when the opponent does not report the result of the clash within a certain time.
-d     */
-    function lootCity() external virtual;    
+     * d
+     */
+    function lootCity() external virtual;
 
     /**
      * @return address - the address of an owner of a city in peace.
      */
-    function findAttackableCity() external virtual view returns (address);
-
+    function findAttackableCity() external view virtual returns (address);
 
     /**
      * Return the player city state
@@ -217,9 +210,7 @@ d     */
      * @return _target address - the target player address that is underAttack by this player,
      * @return _attackingArmy Army - the attack army
      */
-    function playerState(
-        address _player
-    )
+    function playerState(address _player)
         external
         view
         virtual

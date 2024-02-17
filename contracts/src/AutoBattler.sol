@@ -12,10 +12,7 @@ contract AutoBattler is IAutoBattler {
      * @param _armyVerifierAddress address - the address of the initial army validity prover
      * @param _battleVerifierAddress address - the address of the attack report prover
      */
-    constructor(
-        address _armyVerifierAddress,
-        address _battleVerifierAddress
-    ) {
+    constructor(address _armyVerifierAddress, address _battleVerifierAddress) {
         armyVerifier = IArmyVerifier(_armyVerifierAddress);
         battleVerifier = IAttackVerifier(_battleVerifierAddress);
         gameRecord.attackNonce = 1;
@@ -24,16 +21,11 @@ contract AutoBattler is IAutoBattler {
 
     /// FUNCTIONS ///
 
-    function buildCity(
-        bytes32 _name,
-        Faction _faction,
-        bytes  calldata _proof
-    ) canBuild() external override {
-
+    function buildCity(bytes32 _name, Faction _faction, bytes calldata _proof) external override canBuild {
         defendCity(_proof);
 
-        // make a default city 
-        City memory city; 
+        // make a default city
+        City memory city;
         city.id = gameRecord.cityNonce;
         city.name = _name;
         city.faction = _faction;
@@ -42,8 +34,7 @@ contract AutoBattler is IAutoBattler {
         city.target = address(0);
         city.attacker = address(0);
         city.attackedAt = 0;
-        
-    
+
         // add the city to the game record
         gameRecord.player[msg.sender] = city;
 
@@ -51,22 +42,23 @@ contract AutoBattler is IAutoBattler {
         gameRecord.cityNonce++;
     }
 
-    function defendCity(bytes calldata _proof) public  canBuild() override {
+    function defendCity(bytes calldata _proof) public override canBuild {
         // check if the proof is valid
-        if(!armyVerifier.verify(_proof)) {
+        if (!armyVerifier.verify(_proof)) {
             revert("Invalid army proof");
         }
 
         // update the city army
         gameRecord.player[msg.sender].defenseArmyHash = keccak256(_proof);
-        
     }
 
-    function attack(
-        address _target,
-        Army memory _attackerArmy
-    ) isPlayer() canAttack() isAttackable(_target) external override {
-
+    function attack(address _target, Army memory _attackerArmy)
+        external
+        override
+        isPlayer
+        canAttack
+        isAttackable(_target)
+    {
         // get the defender's city
         City storage defenderCity = gameRecord.player[_target];
 
@@ -82,18 +74,14 @@ contract AutoBattler is IAutoBattler {
 
         gameRecord.attackNonce++;
         emit Clash(msg.sender, _target, gameRecord.attackNonce);
-        
     }
 
-    function reportAttack(
-        bool attacker_wins,
-        bytes calldata _proof
-    ) isPlayer() isUnderAttack() external override {
+    function reportAttack(bool attacker_wins, bytes calldata _proof) external override isPlayer isUnderAttack {
         // get the defender's city
         City storage defenderCity = gameRecord.player[msg.sender];
 
         // check if the proof is valid
-        if(!battleVerifier.verify(_proof)){
+        if (!battleVerifier.verify(_proof)) {
             revert("Invalid attack report proof");
         }
 
@@ -109,10 +97,8 @@ contract AutoBattler is IAutoBattler {
             attackerCity.target = address(0);
             attackerCity.points += 1;
 
-
             emit Destroyed(msg.sender, gameRecord.attackNonce);
         } else {
-
             // update the city status
             defenderCity.cityStatus = CityStatus.Defended;
             defenderCity.attacker = address(0);
@@ -127,12 +113,10 @@ contract AutoBattler is IAutoBattler {
             // update the city status
             emit Defended(msg.sender, gameRecord.attackNonce);
         }
-
     }
 
-
     // defender is calling it
-    function surrender() isPlayer() isUnderAttack() external override {
+    function surrender() external override isPlayer isUnderAttack {
         // get the defender's city
         City storage defenderCity = gameRecord.player[msg.sender];
 
@@ -151,16 +135,15 @@ contract AutoBattler is IAutoBattler {
     }
 
     // attacker is calling it
-    function lootCity() isPlayer() external override {
-
-        // get defender 
+    function lootCity() external override isPlayer {
+        // get defender
         City memory attackerCity = gameRecord.player[msg.sender];
         address target = attackerCity.target;
 
         // get the defender's city
         City storage defenderCity = gameRecord.player[target];
 
-        // check if target has surrenedered or not 
+        // check if target has surrenedered or not
         if (defenderCity.attackedAt + 1 days > block.timestamp) {
             revert("Surrender period has not passed");
         }
@@ -180,14 +163,13 @@ contract AutoBattler is IAutoBattler {
 
     function findAttackableCity() external view override returns (address) {
         require(gameRecord.attackable.length > 0, "Cannot find any attackable city!");
-        
+
         // Generate a pseudo-random number using block timestamp and contract address
         uint256 randomNumber = uint256(keccak256(abi.encodePacked(block.timestamp, address(this))));
         uint256 randomIndex = randomNumber % gameRecord.attackable.length;
-        
+
         return gameRecord.attackable[randomIndex];
     }
-
 
     /// VIEWS ///
 
@@ -208,7 +190,7 @@ contract AutoBattler is IAutoBattler {
         )
     {
         _id = gameRecord.player[_player].id;
-        _defenseArmyHash = gameRecord.player[_player].defenseArmyHash ;
+        _defenseArmyHash = gameRecord.player[_player].defenseArmyHash;
         _name = gameRecord.player[_player].name;
         _cityStatus = gameRecord.player[_player].cityStatus;
         _points = gameRecord.player[_player].points;
@@ -218,5 +200,5 @@ contract AutoBattler is IAutoBattler {
         _attackingArmy = gameRecord.player[_player].attackingArmy;
     }
 
-    /// INTERNAL /// 
+    /// INTERNAL ///
 }
