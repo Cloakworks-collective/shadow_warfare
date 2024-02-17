@@ -30,6 +30,9 @@ contract AutoBattler is IAutoBattler {
         Faction _faction,
         bytes  calldata _proof
     ) canBuild() external override {
+
+        defendCity(_proof);
+
         // make a default city 
         City memory city; 
         city.id = GameRecord.cityNonce;
@@ -37,9 +40,11 @@ contract AutoBattler is IAutoBattler {
         city.faction = _faction;
         city.points = 0;
         city.status = CityStatus.InPeace;
+        city.target = address(0);
+        city.attacker = address(0);
+        city.attackedAt = 0;
         
-        defendCity(_proof);
-
+    
         // add the city to the game record
         GameRecord.player[msg.sender] = city;
 
@@ -81,21 +86,18 @@ contract AutoBattler is IAutoBattler {
         City storage attackerCity = GameRecord.player[msg.sender];
         attackerCity.target = _defender;
 
-        emit Clash(msg.sender, _defender, GameRecord.attackNonce);
         GameRecord.attackNonce++;
+        emit Clash(msg.sender, _defender, GameRecord.attackNonce);
         
     }
 
     function reportAttack(
         address _defender,
+        bool attacker_wins,
         bytes calldata _proof
-    ) isPlayer() external override {
+    ) isPlayer() isUnderAttack() external override {
         // get the defender's city
         City storage defenderCity = GameRecord.player[_defender];
-
-        if (defenderCity.status != CityStatus.UnderAttack) {
-            revert("City is not under attack");
-        }
 
         // check if the proof is valid
         if(!sv.verify(_proof)){
@@ -135,13 +137,11 @@ contract AutoBattler is IAutoBattler {
     }
 
 
-    function surrender() isPlayer() external override {
+    // defender is calling it
+    function surrender() isPlayer() isUnderAttack() external override {
         // get the defender's city
         City storage defenderCity = GameRecord.player[msg.sender];
 
-        if (defenderCity.status != CityStatus.UnderAttack) {
-            revert("City is not under attack");
-        }
         // update the city status
         defenderCity.status = CityStatus.Surrendered;
         defenderCity.attacker = address(0);
@@ -156,8 +156,8 @@ contract AutoBattler is IAutoBattler {
         emit Surrendered(_attacker, GameRecord.attackNonce);
     }
 
-
-    function claimSurrender() isPlayer() external override {
+    // attacker is calling it
+    function claimSurrender() isPlayer() isUnderAttack() external override {
 
         // get defender 
         attackerCity = GameRecord.player[msg.sender];
@@ -165,10 +165,6 @@ contract AutoBattler is IAutoBattler {
 
         // get the defender's city
         City storage defenderCity = GameRecord.player[target];
-
-        if (defenderCity.status != CityStatus.UnderAttack) {
-            revert("City is not under attack");
-        }
 
         if (defenderCity.attackedAt + 1 days > block.timestamp) {
             revert("Surrender period has not passed");

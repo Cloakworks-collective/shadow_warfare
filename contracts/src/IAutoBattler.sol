@@ -55,7 +55,7 @@ abstract contract IAutoBattler {
         Faction faction;
         uint256 points;
         address attacker;
-        address attackedAt;
+        uint256 attackedAt;
         address target; 
         Army attackingArmy;
 
