@@ -1,120 +1,35 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+//SPDX-License-Identifier: MIT
+pragma solidity >=0.6.0;
 
-/*//////////////////////////////////////////////////////////////
-                        IMPORTS
-//////////////////////////////////////////////////////////////*/
-import "./City.sol";
-import "./utils/constants.sol";
-import "./utils/customTypes.sol";
+import "./IAutoBattler.sol";
 
-/*//////////////////////////////////////////////////////////////
-                        INTERFACE
-//////////////////////////////////////////////////////////////*/
-interface INoirVerifier {
-    function verify(bytes calldata _proof, bytes32[] calldata _publicInputs) external view returns (bool);
-}
+contract BattleshipGame is IAutoBattler {
+    /// CONSTRUCTOR ///
 
-contract AutoBattler {
-
-    /*//////////////////////////////////////////////////////////////
-                        ERRORS
-    //////////////////////////////////////////////////////////////*/
-    error ErrorInvalidProof();
-    error ErrorUnauthorized();
-
-    /*//////////////////////////////////////////////////////////////
-                        IMMUTABLES VARIABLES
-    //////////////////////////////////////////////////////////////*/
-    INoirVerifier public immutable validDefenseVerifier;
-    INoirVerifier public immutable revealAttackVerifier;
-    City public immutable city;
-
-    /*//////////////////////////////////////////////////////////////
-                                Mappings and Arrays
-    //////////////////////////////////////////////////////////////*/
-    Battle[] public battles;
-    mapping(address => bytes) public defenseHashes;
-
-
-    /*//////////////////////////////////////////////////////////////
-                                EVENTS
-    //////////////////////////////////////////////////////////////*/
-    event DefenseVerified(address indexed _defender, uint256 indexed cityId);
-    event AttackRevealed(address indexed _attacker, uint256 indexed cityId);
-    event BattleResult(address indexed _attacker, uint256 indexed cityId, bool _win);
-
-    /*//////////////////////////////////////////////////////////////
-                                MODIFIERS
-    //////////////////////////////////////////////////////////////*/
-
-    modifier onlyCityOwner(uint256 cityId) {
-        if (city.ownerOf(cityId) != msg.sender) {
-            revert ErrorUnauthorized();
-        }
-         _;
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                            CONSTRUCTOR
-    //////////////////////////////////////////////////////////////*/
+    /**
+     * Construct new instance of Battleship manager
+     *
+     * @param _forwarder address - the address of the erc2771 trusted forwarder (NOT RELATED TO NOIR)
+     * @param _bv address - the address of the initial army validity prover
+     * @param _sv address - the address of the attack report prover
+     */
     constructor(
-        address _validDefenseVerifier,
-        address _revealAttackVerifier, 
-        address _city
-    ) {
-        validDefenseVerifier = INoirVerifier(_validDefenseVerifier);
-        revealAttackVerifier = INoirVerifier(_revealAttackVerifier);
-        city = City(_city);
+        address _forwarder,
+        address _bv,
+        address _sv
+    ) ERC2771Context(_forwarder) {
+        trustedForwarder = _forwarder;
+        bv = IBoardVerifier(_bv);
+        sv = IShotVerifier(_sv);
     }
 
-    /*//////////////////////////////////////////////////////////////
-                             USER ACTIONS
-    //////////////////////////////////////////////////////////////*/
+    /// FUNCTIONS ///
 
-    // player 1 commits defense
-    // player 1 defense is verified
-    // player1 defense hash is stored in the contract
-    function commitDefense(
-        bytes calldata _proof,
-        bytes32[] calldata _publicInputs
-    ) external  onlyCityOwner(params.cityId){
-        require(validDefenseVerifier.verify(_proof, _publicInputs), "Invalid defense proof");
-        emit DefenseVerified(msg.sender, uint256(_publicInputs[0]));
-    }
+    
 
-    // player 2 commits attack
-    // on chain verification of the attack (no circuits involved)
-    function commitAttack(
-        bytes calldata _proof,
-        bytes32[] calldata _publicInputs
-    ) external  onlyCityOwner(params.cityId) {
-        require(revealAttackVerifier.verify(_proof, _publicInputs), "Invalid attack proof");
-        emit AttackRevealed(msg.sender, uint256(_publicInputs[0]));
-    }
+    /// VIEWS ///
 
-    // re verify defense
-    // just check hash of defense
-    function verifyDefense(
-        uint256 _cityId
-    ) external  onlyCityOwner(params.cityId) {
-        emit BattleResult(msg.sender, _cityId, true);
-    }
 
-    // collect the forfeit, defense was not verified in time (24 hours after attack was cimmited)
-    function collectForfeit(
-        uint256 _cityId
-    ) external {
-        emit BattleResult(msg.sender, _cityId, false);
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                                INTERNALS
-    //////////////////////////////////////////////////////////////*/
-
-    /*//////////////////////////////////////////////////////////////
-                                GETTERS 
-    //////////////////////////////////////////////////////////////*/
+    /// INTERNAL ///
 
 }
-
