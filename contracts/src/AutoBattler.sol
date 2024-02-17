@@ -21,14 +21,13 @@ contract AutoBattler is IAutoBattler {
 
     /// FUNCTIONS ///
 
-    function buildCity(bytes32 _name, bytes memory _proof) external override canBuild {
+    function buildCity(bytes memory _proof) external override canBuild {
         // Validate player's army configuration and update defenseArmyHash
-        defendCity(_proof);
+        _defendCity(_proof);
 
         // Set up a default city
         City memory city;
         city.id = gameRecord.cityNonce;
-        city.name = _name;
         city.points = 0;
         city.cityStatus = CityStatus.InPeace;
         city.target = address(0);
@@ -42,20 +41,15 @@ contract AutoBattler is IAutoBattler {
         gameRecord.cityNonce++;
     }
 
-    function defendCity(bytes memory _proof) public override {
-        // Verify integrity of defense army configuration
-        require(armyVerifier.verify(_proof), "Invalid Army Configuration!");
+    function deployNewDefenseArmy(bytes memory _proof) external override isPlayer isDefeated {
+        // Validate player's army configuration and update defenseArmyHash
+        _defendCity(_proof);
 
-        // Extract army commitment from public inputs to enforce battle proof inputs against
-        bytes32 armyCommitment;
-        assembly {
-            armyCommitment := mload(add(_proof, 32))
-        }
-
-        // Update the city defenseArmyHash
-        gameRecord.player[msg.sender].defenseArmyHash = armyCommitment;
+        // Update city status
+        gameRecord.player[msg.sender].cityStatus = CityStatus.InPeace;
     }
 
+    //TODO Check army validity to reduce error while ZK Provings
     function attack(address _target, Army memory _attackerArmy)
         external
         override
@@ -88,7 +82,7 @@ contract AutoBattler is IAutoBattler {
         City storage defenderCity = gameRecord.player[msg.sender];
 
         // Check proof uses the caller's army commitment(defenseArmyHash)
-        require(_validateArmyCommitment(_proof, defenderCity.defenseArmyHash), "Non compliant army commitment!");
+        require(validateArmyCommitment(_proof, defenderCity.defenseArmyHash), "Non compliant army commitment!");
 
         // Check if the battle proof is valid
         if (!battleVerifier.verify(_proof)) {
@@ -183,7 +177,9 @@ contract AutoBattler is IAutoBattler {
     function findAttackableCity() external view override returns (address) {
         require(gameRecord.attackable.length > 0, "Cannot find any attackable city!");
 
-        uint256 randomIndex = _generatePsuedoRandomNumber(0, gameRecord.attackable.length);
+        // Generate a pseudo-random number using block timestamp and contract address
+        uint256 randomNumber = uint256(keccak256(abi.encodePacked(block.timestamp, address(this))));
+        uint256 randomIndex = randomNumber % gameRecord.attackable.length;
 
         return gameRecord.attackable[randomIndex];
     }
@@ -220,6 +216,26 @@ contract AutoBattler is IAutoBattler {
     /// INTERNAL ///
 
     /**
+     * Defends the city by commiting a defense army.
+     * @dev modifier canBuild
+     *
+     * @param _proof bytes memory - zk proof of valid army
+     */
+    function _defendCity(bytes memory _proof) internal {
+        // Verify integrity of defense army configuration
+        require(armyVerifier.verify(_proof), "Invalid Army Configuration!");
+
+        // Extract army commitment from public inputs to enforce battle proof inputs against
+        bytes32 armyCommitment;
+        assembly {
+            armyCommitment := mload(add(_proof, 32))
+        }
+
+        // Update the city defenseArmyHash
+        gameRecord.player[msg.sender].defenseArmyHash = armyCommitment;
+    }
+
+    /**
      * Checks that the army commitment in a battle proof is the same as a given commitment(defenseArmyHash)
      * @dev army commitment is stored in the first 32 bytes of a proof string
      *
@@ -227,26 +243,10 @@ contract AutoBattler is IAutoBattler {
      * @param _armyCommitment bytes32 - the commitment to compare against extracted value
      * @return ok bool - true if commitments match
      */
-    function _validateArmyCommitment(bytes memory _proof, bytes32 _armyCommitment) internal pure returns (bool ok) {
+    function validateArmyCommitment(bytes memory _proof, bytes32 _armyCommitment) internal pure returns (bool ok) {
         assembly {
             let commitment := mload(add(_proof, 32))
             ok := eq(commitment, _armyCommitment)
         }
     }
-
-    /**
-     * Generate a pseudo-random number using block timestamp and contract address
-     * @dev army commitment is stored in the first 32 bytes of a proof string
-     *
-     * @param _max uint256 - the maximum value of the random number
-     * @param _min uin256 - the minimum value of the random number
-     * @return randomNUmber uint256 - the generated random number
-     */
-    function _generatePsuedoRandomNumber(uint256 _min, uint256 _max) internal view returns (uint256) {
-        uint256 randomNumber = uint256(keccak256(abi.encodePacked(block.timestamp, address(this))));
-        randomNumber = randomNumber % (_max - _min) + _min;
-        return randomNumber;
-    }
-
- 
 }

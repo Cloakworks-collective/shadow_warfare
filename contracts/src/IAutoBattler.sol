@@ -27,12 +27,6 @@ abstract contract IAutoBattler {
         Surrendered
     }
 
-    enum ArmyType {
-        Tank,
-        Artillery,
-        Infantry
-    }
-
     /// STRUCTS ///
 
     struct Army {
@@ -141,18 +135,14 @@ abstract contract IAutoBattler {
      * Calls defendCity internally
      * @dev modifier canBuild
      *
-     * @param _proof bytes calldata - zk proof of valid board
-     * @param name bytes32 name - name of the city
      */
-    function buildCity(bytes32 name, bytes calldata _proof) external virtual;
+    function buildCity(bytes calldata _proof) external virtual;
 
     /**
-     * Defends the city by commiting a defense army.
-     * @dev modifier canBuild
-     *
-     * @param _proof bytes memory - zk proof of valid board
+     * If the player's defense army is defeated(lost in battle)
+     * the player calls this function to commit a new defense army.
      */
-    function defendCity(bytes memory _proof) public virtual;
+    function deployNewDefenseArmy(bytes calldata _proof) external virtual;
 
     /**
      * Attack a city by committing an attacking army.
