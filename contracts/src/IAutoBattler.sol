@@ -27,12 +27,6 @@ abstract contract IAutoBattler {
         Surrendered
     }
 
-    enum Faction {
-        Red,
-        Blue,
-        Green
-    }
-
     enum ArmyType {
         Tank,
         Artillery,
@@ -52,7 +46,6 @@ abstract contract IAutoBattler {
         bytes32 defenseArmyHash;
         bytes32 name;
         CityStatus cityStatus;
-        Faction faction;
         uint256 points;
         address attacker;
         uint256 attackedAt;
@@ -150,9 +143,8 @@ abstract contract IAutoBattler {
      *
      * @param _proof bytes calldata - zk proof of valid board
      * @param name bytes32 name - name of the city
-     * @param faction uint8 - faction of the city
      */
-    function buildCity(bytes32 name, Faction faction, bytes calldata _proof) external virtual;
+    function buildCity(bytes32 name, bytes calldata _proof) external virtual;
 
     /**
      * Defends the city by commiting a defense army.

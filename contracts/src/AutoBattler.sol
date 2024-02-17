@@ -21,7 +21,7 @@ contract AutoBattler is IAutoBattler {
 
     /// FUNCTIONS ///
 
-    function buildCity(bytes32 _name, Faction _faction, bytes memory _proof) external override canBuild {
+    function buildCity(bytes32 _name, bytes memory _proof) external override canBuild {
         // Validate player's army configuration and update defenseArmyHash
         defendCity(_proof);
 
@@ -29,7 +29,6 @@ contract AutoBattler is IAutoBattler {
         City memory city;
         city.id = gameRecord.cityNonce;
         city.name = _name;
-        city.faction = _faction;
         city.points = 0;
         city.cityStatus = CityStatus.InPeace;
         city.target = address(0);
