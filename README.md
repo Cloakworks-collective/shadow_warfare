@@ -63,7 +63,7 @@ The Proof is verified on-chain and the result is stored on-chain.
 
 ![alt text](step-4.png)
 
-In Optional Step 4, in case Player 1 ghosts, we let Player 2 collect forfeir (loot city) aafter a certain time period.
+In Optional Step 4, in case Player 1 ghosts, we let Player 2 collect battle points (loot city) after a certain time period(1 day).
 
 ## Technologies used
 
@@ -114,7 +114,7 @@ The smart contract defines several public-facing functions that facilitate the c
 - **Purpose**: Registers a player in the game by building a city with default parameters. This function implicitly calls `defendCity` to deploy the city's initial defense army.
 - **Parameters**:
   - `_proof`: A byte array containing the zero-knowledge proof to verify the defense army's validity without revealing its composition.
-  - `defenseArmyHash`: A bytes32 hash representing the encrypted composition of the defense army, ensuring its secrecy.
+  - `_defenseArmyHash`: A bytes32 pedersen hash representing the encrypted composition of the defense army, ensuring its secrecy.
 - **Modifiers**: `canBuild` ensures that the conditions for building a city are met before execution.
 - **Visibility**: External, allowing it to be called from outside the contract.
 
@@ -164,6 +164,11 @@ Zero-knowledge proofs play a critical role in maintaining the strategic depth an
 
 - **Why?** Zero-knowledge proofs allow the validation of a player's army without revealing its composition to the public or the opponent. By storing only the hash of the army's composition on-chain, the game ensures that the details of a player's defensive army remain private. This secrecy is crucial for strategic planning and defense, as it prevents opponents from tailoring their attacks to exploit specific weaknesses in the defender's army.
 
+- When a player is attacked, if his city is well defended, then the player keeps his defense army private thanks to his army commitment.
+- If the player's defense is destroyed then the player is required to commit a new defense army.
+- In case of having the same defense after an attack, we can say that there is a bit of information leaked about the defense army because the attacker army is public.
+- But this makes the game more strategic as players seek to win points challenging each other.
+
 ### Report Opponent's Attack
 
 - **Why?** Reporting the outcome of an opponent's attack using zero-knowledge proofs serves multiple purposes:
@@ -187,6 +192,8 @@ Throughout the development of our game, we encountered several significant chall
 - **Health Setback**: Adding to our challenges, one of our key team members fell ill, resulting in a loss of almost a week's worth of progress. 
 
 - **Sindri**: We also explored integrating with Sindri, but encountered challenges due to the apparent lack of recent updates for Noir support in Sindri's documentation. Additionally, we found the available documentation and tutorials for Sindri to be insufficiently comprehensive. Given our time constraints, we ultimately decided to refrain from using it for this project.
+
+- **Noir JS**: We worked very hard to deliver tests simulating an AutoBattler game. Unfortunately, due to lack of time, we struggled for hours to have the JS API provide consistent proofs for the contract methods. Noir JS API is continually updated, for that the tutorials were quite misleading regarding the delay in version update. We tried to have tests work with foundry but it wasn't the best choice for a gaming DApp. We spent a considerable amount of time to migrate to hardhat but having mixed up noir client API was very frustrating and at the end it was chaotic, nothing worked, and nothing was deliverable for submission.
 
 ## Deployed Contracts 
 
