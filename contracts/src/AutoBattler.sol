@@ -8,6 +8,7 @@ contract AutoBattler is IAutoBattler {
     uint public constant ARMY_SIZE = 1000;
 
     /// CONSTRUCTOR ///
+    
     /**
      * Construct new instance of Battleship manager
      *
@@ -94,13 +95,15 @@ contract AutoBattler is IAutoBattler {
         // Check proof uses the caller's army commitment(defenseArmyHash)
         require(validateArmyCommitment(_proof, defenderCity.defenseArmyHash), "Non compliant army commitment!");
 
-        // Check if the battle proof is valid
-        bytes32[] memory publicInputs = new bytes32[](4);
+        // Set up the public inputs for the battle verifier 
+        bytes32[] memory publicInputs = new bytes32[](5);
         publicInputs[0] = defenderCity.defenseArmyHash;
         publicInputs[1] = bytes32(attacker_army.infantry);
         publicInputs[2] = bytes32(attacker_army.artillery);
         publicInputs[3] = bytes32(attacker_army.tanks);
         publicInputs[4] = bytes32(battle_result);
+        
+        // Check if the battle proof is valid
         if (!battleVerifier.verify(_proof, publicInputs)) {
             revert("Invalid attack report proof");
         } 
