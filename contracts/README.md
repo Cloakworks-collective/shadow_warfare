@@ -1,5 +1,31 @@
 ![alt text](image.png)
 
+## Table of Contents
+- [Shadow Warfare: Cities under Siege](#shadow-warfare--cities-under-siege)
+    + [The World of Cities and Armies](#the-world-of-cities-and-armies)
+    + [Art of war](#art-of-war)
+    + [Triumphs, Rankings, and Rewards](#triumphs--rankings--and-rewards)
+  * [How it all works](#how-it-all-works)
+  * [Technologies used](#technologies-used)
+    + [Scroll](#scroll)
+    + [Noir](#noir)
+  * [The Game State](#the-game-state)
+    + [Enums](#enums)
+    + [Structs](#structs)
+  * [Public Facing Functions](#public-facing-functions)
+    + [`buildCity`](#-buildcity-)
+    + [`deployNewDefenseArmy`](#-deploynewdefensearmy-)
+    + [`attack`](#-attack-)
+    + [`reportAttack`](#-reportattack-)
+    + [`surrender`](#-surrender-)
+    + [`lootCity`](#-lootcity-)
+  * [The Importance of Zero-Knowledge Proofs in the Game](#the-importance-of-zero-knowledge-proofs-in-the-game)
+    + [Validate Army and Store Army Hash On-Chain](#validate-army-and-store-army-hash-on-chain)
+    + [Report Opponent's Attack](#report-opponent-s-attack)
+  * [Challenges and Hurdles](#challenges-and-hurdles)
+
+
+
 # Shadow Warfare: Cities under Siege
 ---
 <br/>
@@ -18,43 +44,40 @@ This dynamic introduces an additional layer of strategy but is subject to change
 
 Success in battle translates to points, propelling players up the rankings and unlocking access to future network airdrops and rewards.
 
+## How it all works 
+
+![alt text](image-1.png)
+
+In Step 1, Player 1 sets up his defense for the city, which is kept private. Only the defense hash is stored on-chain to keep him honest, and to make sure he cannot change it later.
+
+![alt text](image-2.png)
+
+In Step 2, Player 2 attacks the city of Player 1. The attacking army composition is Public.  
+
+![alt text](image-5.png)
+
+In Step 3, Player 1 computes the battle result off-chain, and generates a proof of that computation along with the result. 
+The Proof is verified on-chain and the result is stored on-chain.  
+
+![alt text](image-4.png)
+
+In Optional Step 4, in case Player 1 ghosts, we let Player 2 collect forfeir (loot city) aafter a certain time period.
+
+## Technologies used
+
+### Scroll 
+We've selected Scroll for its seamless EVM compatibility and robust support for precompiled verifiers across major DSLs like Circom and Noir. This choice allows our game to efficiently utilize zero-knowledge proofs within EVM ecosystems, ensuring scalability and broad blockchain compatibility.
+
+### Noir
+We use Noir, a DSL tailored for zero-knowledge proofs, to generate off-chain proofs and on-chain verifiers, ensuring the privacy of strategic game elements like army compositions. This method keeps sensitive information concealed, maintaining gameplay surprise and depth.
+
+
+
+
+
 
 ## The Game State 
  The game state is represented through several enums, structs, and a game record that collectively manage the dynamics of warfare, defense, and city management.
-
-```solidity
-    enum CityStatus {
-        NonExistant,
-        InPeace,
-        UnderAttack,
-        Destroyed,
-        Defended,
-        Surrendered
-    }
-
-    /// STRUCTS ///
-    struct Army {
-        uint256 infantry;
-        uint256 artillery;
-        uint256 tanks;
-    }
-
-    struct City {
-        bytes32 defenseArmyHash;
-        CityStatus cityStatus;
-        uint256 points;
-        address attacker;
-        uint256 attackedAt;
-        address target;
-        Army attackingArmy;
-    }
-
-    struct GameRecord {
-        uint256 attackNonce; // clash counter
-        mapping(address => City) player; // map player address to City Data
-        address[] attackable; // record of attackable cities infered by player address
-    }
-```
 
  ### Enums
 
@@ -84,4 +107,86 @@ Success in battle translates to points, propelling players up the rankings and u
   - `player`: A mapping from player addresses to their corresponding `City` data, linking players to their in-game entities.
   - `attackable`: An array of addresses representing cities that are eligible to be attacked, helping players identify potential targets.
 
+## Public Facing Functions 
+
+The smart contract defines several public-facing functions that facilitate the core gameplay mechanics, including city building, army deployment, attacking, defending, and surrendering. Here's a breakdown of each function and its purpose within the game:
+
+### `buildCity`
+
+- **Purpose**: Registers a player in the game by building a city with default parameters. This function implicitly calls `defendCity` to deploy the city's initial defense army.
+- **Parameters**:
+  - `_proof`: A byte array containing the zero-knowledge proof to verify the defense army's validity without revealing its composition.
+  - `defenseArmyHash`: A bytes32 hash representing the encrypted composition of the defense army, ensuring its secrecy.
+- **Modifiers**: `canBuild` ensures that the conditions for building a city are met before execution.
+- **Visibility**: External, allowing it to be called from outside the contract.
+
+### `deployNewDefenseArmy`
+
+- **Purpose**: Allows a player to deploy a new defense army if their current army is defeated in battle. This function is essential for players to recover from losses and continue participating in the game.
+- **Parameters**:
+  - `_proof`: Similar to `buildCity`, a byte array for the zero-knowledge proof of the new defense army.
+  - `defenseArmyHash`: The hash of the new defense army's composition.
+- **Visibility**: External, to be called by players when needed.
+
+### `attack`
+
+- **Purpose**: Enables a player to initiate an attack on another city by committing an attacking army.
+- **Parameters**:
+  - `_target`: The address of the city (and its owner) being attacked.
+  - `_attackerArmy`: A struct representing the composition of the attacking army.
+- **Modifiers**: `isAttackable(_target)` checks if the target city is eligible for attack.
+- **Visibility**: External, facilitating player interactions through battles.
+
+### `reportAttack`
+
+- **Purpose**: Used by players to report the outcome of a battle. Winning defends the city and earns points, while losing requires rebuilding the city.
+- **Parameters**:
+  - `battle_result`: An unsigned integer representing the battle's outcome.
+  - `_proof`: A byte array containing the proof of honesty for the reported result.
+- **Visibility**: External, enabling players to conclude and resolve battles.
+
+### `surrender`
+
+- **Purpose**: Allows a player to surrender when their city is under attack, providing an alternative to fighting.
+- **Modifiers**: `isUnderAttack` ensures this function is only callable when the player's city is actively being attacked.
+- **Visibility**: External, offering a strategic option for players in dire situations.
+
+### `lootCity`
+
+- **Purpose**: Enables a player to claim victory points if their opponent fails to report the clash result within a specified timeframe. This function serves as a penalty for inactivity and a reward for the attacking player's aggression.
+- **Visibility**: External, incentivizing timely responses and active participation in the game.
+
+These functions together create a comprehensive gameplay experienc
+
+## The Importance of Zero-Knowledge Proofs in the Game
+
+Zero-knowledge proofs play a critical role in maintaining the strategic depth and fairness of the game. Here's how they contribute to key gameplay elements:
+
+### Validate Army and Store Army Hash On-Chain
+
+- **Why?** Zero-knowledge proofs allow the validation of a player's army without revealing its composition to the public or the opponent. By storing only the hash of the army's composition on-chain, the game ensures that the details of a player's defensive army remain private. This secrecy is crucial for strategic planning and defense, as it prevents opponents from tailoring their attacks to exploit specific weaknesses in the defender's army.
+
+### Report Opponent's Attack
+
+- **Why?** Reporting the outcome of an opponent's attack using zero-knowledge proofs serves multiple purposes:
+  1. **Maintaining Secrecy of the Defending Army**: Even when reporting the results of an attack, the defending player's army composition remains masked, preserving the element of surprise for future battles.
+  2. **Defensive Success**: If a player successfully defends their city, there is no need to alter their defensive strategy. Therefore, keeping the defending army private ensures that the successful defense can be reused without giving away its composition.
+  3. **Requirement to Rebuild After Loss**: In cases where the city is destroyed or the player chooses to forfeit, the requirement to build a new army and validate it again through zero-knowledge proofs ensures that players are actively engaged in maintaining and updating their strategies. It also resets the strategic landscape, preventing opponents from gaining undue advantage from prior knowledge of a city's defenses.
+
+Zero-knowledge proofs thus serve as a foundational technology in the game, ensuring fairness, privacy, and strategic depth. They allow players to engage in complex battles and defense strategies without compromising the secrecy necessary for a dynamic and competitive gaming experience.
+
+
+## Challenges and Hurdles
+
+Throughout the development of our game, we encountered several significant challenges that tested our team's resilience and adaptability. From the onset, these hurdles shaped our journey, pushing us to explore new technologies and adapt to unforeseen circumstances.
+
+- **Late Team Assembly**: Our project kicked off with the challenge of having formed our team later than ideal. This delay in team assembly put us on a compressed schedule, requiring rapid alignment of our objectives, swift adoption of roles, and an accelerated development pace to catch up with our initial timeline.
+
+- **Navigating New Technologies**: This project marked our first experience with both Noir and Foundry, introducing us to the intricacies of zero-knowledge proofs and advanced smart contract development. 
+
+- **Solidity Development Experience**: Our collective experience in Solidity development was modest at the outset of this project. It is very possible that there are potential security vulnerabilities within our contracts.
+
+- **Health Setback**: Adding to our challenges, one of our key team members fell ill, resulting in a loss of almost a week's worth of progress. 
+
+- **Sindri**: We also explored integrating with Sindri, but encountered challenges due to the apparent lack of recent updates for Noir support in Sindri's documentation. Additionally, we found the available documentation and tutorials for Sindri to be insufficiently comprehensive. Given our time constraints, we ultimately decided to refrain from using it for this project.
 
