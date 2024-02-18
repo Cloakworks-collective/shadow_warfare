@@ -13,7 +13,7 @@ contract AutoBattler is IAutoBattler {
      * Construct new instance of AutoBattler manager
      *
      * @param _armyVerifierAddress address - the address of the initial army validity prover
-     * @param _battleVerifierAddress address - the address of the attack report prover
+     * @param _battleVerifierAddress address - the address of the battle report prover
      */
     constructor(address _armyVerifierAddress, address _battleVerifierAddress) {
         armyVerifier = IArmyVerifier(_armyVerifierAddress);
@@ -91,11 +91,13 @@ contract AutoBattler is IAutoBattler {
         
         // Fetch the attacker's city Army
         Army memory attacker_army = defenderCity.attackingArmy;
-        
-        // Check proof uses the caller's army commitment(defenseArmyHash)
-        require(validateArmyCommitment(_proof, defenderCity.defenseArmyHash), "Non compliant army commitment!");
 
-        // Set up the public inputs for the battle verifier 
+        /*
+         * Set up the public inputs for the battle verifier
+         * - The defenseArmyHash public input proves the integrity of the off-chain defender's army
+         * - The Army public input proves that the reported has fetched the correct army and not a different one
+         * - The battle result proves the honesty of the defender's report 
+         */  
         bytes32[] memory publicInputs = new bytes32[](5);
         publicInputs[0] = defenderCity.defenseArmyHash;
         publicInputs[1] = bytes32(attacker_army.infantry);
@@ -153,7 +155,8 @@ contract AutoBattler is IAutoBattler {
         // Update the city state of the attacking player
         City storage attackerCity = gameRecord.player[defenderCity.attacker];
         attackerCity.target = address(0);
-        //TODO update player points according to battle points
+
+        // Increment attacker's points
         attackerCity.points += 1;
 
         // Emit surrender event
@@ -163,6 +166,9 @@ contract AutoBattler is IAutoBattler {
     /**
      * If this player's target does not report battle result within 24 hours then the message sender
      * calls this method to claim his/her battle points.
+     *
+     * Note: With a proper UI the attacker can track his target and hence he/she would be 
+     * notified to call this method.
      */
     function lootCity() external override isPlayer {
         // Fetch the target's player address
@@ -203,6 +209,10 @@ contract AutoBattler is IAutoBattler {
 
     /// VIEWS ///
 
+    /**
+     * Helper function that return print a player's city.
+     * @param _player address - the address of the player
+     */
     function playerState(address _player)
         external
         view
@@ -230,38 +240,19 @@ contract AutoBattler is IAutoBattler {
 
     /**
      * Defends the city by commiting a defense army.
-     * @dev modifier canBuild
      *
      * @param _proof bytes memory - zk proof of valid army
+     * @param _defenseArmyHash bytes32 - the army commitment pedersen hash
      */
-    function _defendCity(bytes memory _proof, bytes32 defenseArmyHash) internal {
-        // Verify integrity of defense army configuration
+    function _defendCity(bytes memory _proof, bytes32 _defenseArmyHash) internal {
+        // Set up verifier's public input from the caller's input
         bytes32[] memory publicInputs = new bytes32[](1);
-        publicInputs[0] = defenseArmyHash;
+        publicInputs[0] = _defenseArmyHash;
+        
+        // Verify integrity of defense army configuration
         require(armyVerifier.verify(_proof, publicInputs), "Invalid Army Configuration!");
 
-        // Extract army commitment from public inputs to enforce battle proof inputs against
-        bytes32 armyCommitment;
-        assembly {
-            armyCommitment := mload(add(_proof, 32))
-        }
-
         // Update the city defenseArmyHash
-        gameRecord.player[msg.sender].defenseArmyHash = armyCommitment;
-    }
-
-    /**
-     * Checks that the army commitment in a battle proof is the same as a given commitment(defenseArmyHash)
-     * @dev army commitment is stored in the first 32 bytes of a proof string
-     *
-     * @param _proof bytes - the proof string to extract public inputs from
-     * @param _armyCommitment bytes32 - the commitment to compare against extracted value
-     * @return ok bool - true if commitments match
-     */
-    function validateArmyCommitment(bytes memory _proof, bytes32 _armyCommitment) internal pure returns (bool ok) {
-        assembly {
-            let commitment := mload(add(_proof, 32))
-            ok := eq(commitment, _armyCommitment)
-        }
+        gameRecord.player[msg.sender].defenseArmyHash = _defenseArmyHash;
     }
 }
