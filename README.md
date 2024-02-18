@@ -1,4 +1,4 @@
-![alt text](image.png)
+![alt text](cover.png)
 
 ## Table of Contents
 - [Shadow Warfare: Cities under Siege](#shadow-warfare--cities-under-siege)
@@ -46,20 +46,20 @@ Success in battle translates to points, propelling players up the rankings and u
 
 ## How it all works 
 
-![alt text](image-1.png)
+![alt text](step-1.png)
 
 In Step 1, Player 1 sets up his defense for the city, which is kept private. Only the defense hash is stored on-chain to keep him honest, and to make sure he cannot change it later.
 
-![alt text](image-2.png)
+![alt text](step-2.png)
 
 In Step 2, Player 2 attacks the city of Player 1. The attacking army composition is Public.  
 
-![alt text](image-5.png)
+![alt text](step-5.png)
 
 In Step 3, Player 1 computes the battle result off-chain, and generates a proof of that computation along with the result. 
 The Proof is verified on-chain and the result is stored on-chain.  
 
-![alt text](image-4.png)
+![alt text](step-4.png)
 
 In Optional Step 4, in case Player 1 ghosts, we let Player 2 collect forfeir (loot city) aafter a certain time period.
 
