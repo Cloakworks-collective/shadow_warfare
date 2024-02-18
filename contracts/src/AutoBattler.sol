@@ -10,7 +10,7 @@ contract AutoBattler is IAutoBattler {
     /// CONSTRUCTOR ///
     
     /**
-     * Construct new instance of Battleship manager
+     * Construct new instance of AutoBattler manager
      *
      * @param _armyVerifierAddress address - the address of the initial army validity prover
      * @param _battleVerifierAddress address - the address of the attack report prover
@@ -18,7 +18,7 @@ contract AutoBattler is IAutoBattler {
     constructor(address _armyVerifierAddress, address _battleVerifierAddress) {
         armyVerifier = IArmyVerifier(_armyVerifierAddress);
         battleVerifier = IBattleVerifier(_battleVerifierAddress);
-        gameRecord.attackNonce = 1;
+        gameRecord.attackNonce = 0;
     }
 
     /// FUNCTIONS ///
