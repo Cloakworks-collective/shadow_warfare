@@ -125,4 +125,26 @@ If, he does not - then attacker can call forfeit() and win.
   - Background: Beginner devs
 
 
+## Game Story 
+- Explain the game logic following the readme
+  - It is an innovative game 
+  - Scroll enables scalability(lower gas fees) and privacy infrastructure(noir zk) for developing gaming Dapps
+  - Walk through the game readme to explain the game mechanics. 
+    - Sugar coated description of the functions, modifiers, enums, game state, etc...
+  - Transition to the key importance of zk in the game
+    - Walk through noir circuits
+      - Explain what the circuits do
+      - Explain how the assert game rules
+      - Army validity
+      - Off-chain attack report honesty
+      - how public input take place(most of them from the contract, sometimes from the player)
+        - from the player --> set up new defense army + battle result
+        - the rest is from the contract 
+  - At this you had explained the general scope of the game mechanincs and circuits
+  - Describe some technical details walking through the AutoBattler contract.
+- At the end take 10 seconds to say that unfortunately we tried to showcase game simulation tersts with noir_js or foundry API but nothing worked
+  - following tutorial the APIs and npm packages weren't consistent 
+  - we spent a lot of time, it was chaotic, nothing worked, nothing commited
+- Show that you deployed error free contract 
+
 
