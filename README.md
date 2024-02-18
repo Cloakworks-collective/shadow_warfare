@@ -53,9 +53,10 @@ In Step 1, Player 1 sets up his defense for the city, which is kept private. Onl
 
 ![alt text](step-2.png)
 
-In Step 2, Player 2 attacks the city of Player 1. The attacking army composition is Public.  
+In Step 2, Player 2 attacks the city of Player 1. The attacking army composition is Public.
+The attacker's army is stored among the defender's city data to make it easy for report the battle attack in step 3.  
 
-![alt text](step-5.png)
+![alt text](step-3.png)
 
 In Step 3, Player 1 computes the battle result off-chain, and generates a proof of that computation along with the result. 
 The Proof is verified on-chain and the result is stored on-chain.  
