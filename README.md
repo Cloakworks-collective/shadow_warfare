@@ -23,6 +23,7 @@
     + [Validate Army and Store Army Hash On-Chain](#validate-army-and-store-army-hash-on-chain)
     + [Report Opponent's Attack](#report-opponent-s-attack)
   * [Challenges and Hurdles](#challenges-and-hurdles)
+  * [Deployed Contracts](#deployed-contracts)
 
 
 
@@ -70,10 +71,6 @@ We've selected Scroll for its seamless EVM compatibility and robust support for 
 
 ### Noir
 We use Noir, a DSL tailored for zero-knowledge proofs, to generate off-chain proofs and on-chain verifiers, ensuring the privacy of strategic game elements like army compositions. This method keeps sensitive information concealed, maintaining gameplay surprise and depth.
-
-
-
-
 
 
 ## The Game State 
@@ -190,3 +187,11 @@ Throughout the development of our game, we encountered several significant chall
 
 - **Sindri**: We also explored integrating with Sindri, but encountered challenges due to the apparent lack of recent updates for Noir support in Sindri's documentation. Additionally, we found the available documentation and tutorials for Sindri to be insufficiently comprehensive. Given our time constraints, we ultimately decided to refrain from using it for this project.
 
+## Deployed Contracts 
+
+  * ArmyVerifier created at address:  0x4B2d83eF3BE7d4451669bF96ad4B6A799487A1d7
+  * BattlerVerifier created at address:  0x00144DA41F108185330f76c68d71ce4a0f432d8d
+  * AutoBattler created at address:  0x4f8169e076AD56eA14E77575d5f6c52F9F19f153
+
+  Verified Contract can be seen at: 
+  https://sepolia.scrollscan.dev/address/0x4f8169e076AD56eA14E77575d5f6c52F9F19f153#code
