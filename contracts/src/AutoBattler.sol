@@ -23,9 +23,9 @@ contract AutoBattler is IAutoBattler {
 
     /// FUNCTIONS ///
 
-    function buildCity(bytes memory _proof, bytes32 defenseArmyHash) external override canBuild {
+    function buildCity(bytes memory _proof, bytes32 _defenseArmyHash) external override canBuild {
         // Validate player's army configuration and update defenseArmyHash
-        _defendCity(_proof, defenseArmyHash);
+        _defendCity(_proof, _defenseArmyHash);
 
         // Set up a default city
         City memory city;
@@ -39,9 +39,9 @@ contract AutoBattler is IAutoBattler {
         gameRecord.player[msg.sender] = city;
     }
 
-    function deployNewDefenseArmy(bytes memory _proof, bytes32 defenseArmyHash) external override isPlayer isDefeated {
+    function deployNewDefenseArmy(bytes memory _proof, bytes32 _defenseArmyHash) external override isPlayer isDefeated {
         // Validate player's army configuration and update defenseArmyHash
-        _defendCity(_proof, defenseArmyHash);
+        _defendCity(_proof, _defenseArmyHash);
 
         // Update city status
         gameRecord.player[msg.sender].cityStatus = CityStatus.InPeace;

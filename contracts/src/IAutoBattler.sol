@@ -59,7 +59,7 @@ abstract contract IAutoBattler {
     /// MODIFIERS ///
 
     /**
-     * Determine whether message sender has registered of a fortress
+     * Determine whether message sender has registered of a city.
      */
     modifier isPlayer() {
         require(gameRecord.player[msg.sender].defenseArmyHash != bytes32(0), "Please register a city first!");
@@ -90,7 +90,7 @@ abstract contract IAutoBattler {
 
     /**
      * Ensure a message sender is not currently attacking another player
-     * Default: null bytes instead of target's army hash
+     * Default: null address if the city is in peace.
      */
     modifier canAttack() {
         require(
@@ -104,7 +104,7 @@ abstract contract IAutoBattler {
     }
 
     /**
-     * Ensure a message sender is under attack
+     * Ensure a message sender is under attack.
      */
     modifier isUnderAttack() {
         require(gameRecord.player[msg.sender].cityStatus == CityStatus.UnderAttack, "You city is not under attack!");
@@ -112,7 +112,7 @@ abstract contract IAutoBattler {
     }
 
     /**
-     * Ensure that a target city is attackable
+     * Ensure that a target city is attackable.
      */
     modifier isAttackable(address _target) {
         // Check if the address is in the attackable mapping
@@ -128,20 +128,31 @@ abstract contract IAutoBattler {
 
     /**
      * Register a player by Building a City with default parameters.
-     * Calls defendCity internally
+     * Calls a _defendCity internal function
+     *
      * @dev modifier canBuild
      *
+     * @param _proof bytes calldata - The defense army proof.
+     * @param _defenseArmyHash bytes32- The defense army pedersen hash(commitment);
+
      */
-    function buildCity(bytes calldata _proof, bytes32 defenseArmyHash) external virtual;
+    function buildCity(bytes calldata _proof, bytes32 _defenseArmyHash) external virtual;
 
     /**
      * If the player's defense army is defeated(lost in battle)
      * the player calls this function to commit a new defense army.
+     * 
+     * @dev modifier isPlayer
+     * @dev modifier isDefeated
+     * 
+     * @param _proof bytes calldata - The defense army proof.
+     * @param _defenseArmyHash bytes32- The defense army pedersen hash(commitment);
      */
-    function deployNewDefenseArmy(bytes calldata _proof, bytes32 defenseArmyHash) external virtual;
+    function deployNewDefenseArmy(bytes calldata _proof, bytes32 _defenseArmyHash) external virtual;
 
     /**
-     * Attack a city by committing an attacking army.
+     * Attack a city by declaring war with a public attacking army.
+     *
      * @dev modifier isAttackable(_target)
      *
      * @param _target address - the address of an attackable city owner
@@ -158,20 +169,23 @@ abstract contract IAutoBattler {
     function reportAttack(uint battle_result, bytes calldata _proof) external virtual;
 
     /**
-     * Surrender when under attack
+     * Surrender when under attack.
+     *
+     * @dev modifier isPlayer
      * @dev modifier isUnderAttack
      *
      */
     function surrender() external virtual;
 
     /**
-     * Claim win points when the opponent does not report the result of the clash within a certain time.
-     * d
+     * Claim win points when the opponent does not report the result of the clash within one day.
+     *
+     * @dev modifier isPlayer
      */
     function lootCity() external virtual;
 
     /**
-     * @return address - the address of an owner of a city in peace.
+     * Help the attacker find a target city to attack.
      */
     function findAttackableCity() external view virtual returns (address);
 
